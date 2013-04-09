@@ -121,6 +121,10 @@ class CapifyEc2
     Fog::AWS::ELB.new(:aws_access_key_id => @ec2_config[:aws_access_key_id], :aws_secret_access_key => @ec2_config[:aws_secret_access_key], :region => @ec2_config[:aws_params][:region])
   end 
 
+  def rds
+    Fog::AWS::RDS.new(:aws_access_key_id => @ec2_config[:aws_access_key_id], :aws_secret_access_key => @ec2_config[:aws_secret_access_key], :region => @ec2_config[:aws_params][:region])
+  end
+
   def get_load_balancer_by_instance(instance_id)
     hash = elb.load_balancers.inject({}) do |collect, load_balancer|
       load_balancer.instances.each {|load_balancer_instance_id| collect[load_balancer_instance_id] = load_balancer}
@@ -135,9 +139,16 @@ class CapifyEc2
       lbs[load_balancer.id] = load_balancer
     end
     lbs[load_balancer_name]
-
   end
-     
+
+  def get_rds_by_name(rds_name)
+    rds_instances = {}
+    rds.servers.each do |rds|
+      rds_instances[rds.id] = rds
+    end
+    rds_instances[rds_name]
+  end
+
   def deregister_instance_from_elb(instance_name)
     return unless @ec2_config[:load_balanced]
     instance = get_instance_by_name(instance_name)
