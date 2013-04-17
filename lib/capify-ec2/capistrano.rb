@@ -55,12 +55,6 @@ Capistrano::Configuration.instance(:must_exist).load do
     end
   end
   
-  namespace :deploy do
-    before "deploy", "ec2:deregister_instance"
-    after "deploy", "ec2:register_instance"
-    after "deploy:rollback", "ec2:register_instance"
-  end
-    
   def ec2_roles(*roles)
     roles.each {|role| ec2_role role }
   end
