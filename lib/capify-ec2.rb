@@ -31,14 +31,19 @@ class CapifyEc2
     
     @instances = []
     regions.each do |region|
-      Fog::Compute.new(:provider => 'AWS', 
-                       :aws_access_key_id => @ec2_config[:aws_access_key_id], 
-                       :aws_secret_access_key => @ec2_config[:aws_secret_access_key], 
-                       :region => region).servers.each do |server|
+      Fog::Compute.new( {:provider => 'AWS', :region => region}.merge!(security_credentials) ).servers.each do |server|
         @instances << server if server.ready?
       end
     end
-  end 
+  end
+
+  def security_credentials
+    if @ec2_config[:use_iam_profile]
+      {use_iam_profile: true}
+    else
+      {aws_access_key_id: @ec2_config[:aws_access_key_id], aws_secret_access_key: @ec2_config[:aws_secret_access_key] }
+    end
+  end
   
   def determine_regions()
     @ec2_config[:aws_params][:regions] || [@ec2_config[:aws_params][:region]]
@@ -109,7 +114,7 @@ class CapifyEc2
   end
     
   def elb
-    Fog::AWS::ELB.new(:aws_access_key_id => @ec2_config[:aws_access_key_id], :aws_secret_access_key => @ec2_config[:aws_secret_access_key], :region => @ec2_config[:aws_params][:region])
+    Fog::AWS::ELB.new({:region => @ec2_config[:aws_params][:region]}.merge!(security_credentials))
   end 
   
   def get_load_balancer_by_instance(instance_id)
